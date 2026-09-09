@@ -11,17 +11,25 @@ Web app cơ bản cho doanh nghiệp thiết kế và lắp đặt thang máy, t
 - Danh sách hợp đồng, tiến độ triển khai và số tiền đã thu.
 - Lịch thu tiền, công nợ đến hạn và quá hạn.
 - Tổng hợp doanh thu, tiền thực thu và biểu đồ dòng tiền.
-- Cơ sở dữ liệu D1 với các bảng báo giá, hợp đồng, lịch thanh toán và phiếu thu.
+- Bản demo lưu báo giá mới trên chính trình duyệt đang sử dụng, chưa cần cấu hình cơ sở dữ liệu.
 - Giao diện responsive cho máy tính và điện thoại.
 
 ## Chạy dự án
 
-Yêu cầu Node.js 22.13 trở lên.
+Yêu cầu Node.js 20.9 trở lên.
 
 ```bash
 npm ci
-npm run db:generate
 npm run dev
 ```
 
-Đây là bản MVP. Dữ liệu minh họa trên dashboard giúp nhìn ngay toàn bộ luồng; báo giá mới được lưu vào cơ sở dữ liệu khi triển khai.
+## Triển khai trên Vercel
+
+Import repository này vào Vercel và giữ các thiết lập mặc định:
+
+- Framework Preset: `Next.js`
+- Root Directory: `./`
+- Build Command, Output Directory và Install Command: để mặc định
+- Environment Variables: chưa cần nhập ở bản demo
+
+Đây là bản MVP. Dữ liệu minh họa giúp nhìn ngay toàn bộ luồng; báo giá mới chỉ được lưu riêng trên từng trình duyệt. Khi chuyển sang dùng thật cho nhiều nhân viên, bước tiếp theo là nối Supabase để đồng bộ dữ liệu, tài khoản và phân quyền.

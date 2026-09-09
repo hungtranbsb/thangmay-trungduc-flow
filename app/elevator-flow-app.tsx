@@ -14,6 +14,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 
 type View = "Tổng quan" | "Báo giá" | "Hợp đồng" | "Công nợ" | "Tài chính";
 type Quote = { id: number; code: string; customer: string; project: string; capacity: number; stops: number; value: number; status: string; updatedAt: string };
+const LOCAL_QUOTES_KEY = "trung-duc-flow-quotes-v1";
 
 const demoQuotes: Quote[] = [
   { id: -1, code: "BG-2609-015", customer: "Công ty Minh Phát", project: "Tòa nhà văn phòng Kinh Bắc", capacity: 630, stops: 6, value: 1180000000, status: "Chờ duyệt", updatedAt: "09/09/2026" },
@@ -48,9 +49,15 @@ export function ElevatorFlowApp() {
   const [notice, setNotice] = useState("");
 
   useEffect(() => {
-    fetch("/api/quotes").then((r) => r.ok ? r.json() : Promise.reject()).then((data: { quotes?: Quote[] }) => {
-      if (data.quotes?.length) setQuotes([...data.quotes, ...demoQuotes]);
-    }).catch(() => undefined);
+    try {
+      const saved = window.localStorage.getItem(LOCAL_QUOTES_KEY);
+      if (saved) {
+        const localQuotes = JSON.parse(saved) as Quote[];
+        if (Array.isArray(localQuotes)) setQuotes([...localQuotes, ...demoQuotes]);
+      }
+    } catch {
+      // Giữ dữ liệu mẫu nếu trình duyệt chặn localStorage hoặc dữ liệu cũ bị lỗi.
+    }
   }, []);
 
   const heading = useMemo(() => view === "Tổng quan" ? "Tổng quan điều hành" : view, [view]);
@@ -70,10 +77,24 @@ export function ElevatorFlowApp() {
       quantity, unitPrice, discount, vat, value: Math.round(subtotal * (1 + vat / 100)), validityDays: Number(form.get("validityDays") || 15),
     };
     try {
-      const response = await fetch("/api/quotes", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(input) });
-      const data = await response.json() as { quote?: Quote; error?: string };
-      if (!response.ok || !data.quote) throw new Error(data.error || "Không thể lưu báo giá");
-      setQuotes((current) => [data.quote!, ...current]); setNotice(`Đã tạo ${data.quote.code}`); setDialogOpen(false); setView("Báo giá");
+      const now = new Date();
+      const localQuote: Quote = {
+        id: now.getTime(),
+        code: `BG-${String(now.getFullYear()).slice(-2)}${String(now.getMonth() + 1).padStart(2, "0")}-${String(now.getTime()).slice(-4)}`,
+        customer: input.customer,
+        project: input.project,
+        capacity: input.capacity,
+        stops: input.stops,
+        value: input.value,
+        status: "Bản nháp",
+        updatedAt: new Intl.DateTimeFormat("vi-VN").format(now),
+      };
+      setQuotes((current) => {
+        const localQuotes = [localQuote, ...current.filter((quote) => quote.id > 0)];
+        window.localStorage.setItem(LOCAL_QUOTES_KEY, JSON.stringify(localQuotes));
+        return [localQuote, ...current];
+      });
+      setNotice(`Đã tạo ${localQuote.code} và lưu trên thiết bị này`); setDialogOpen(false); setView("Báo giá");
     } catch (error) { setNotice(error instanceof Error ? error.message : "Không thể lưu báo giá"); }
     finally { setSaving(false); }
   }
